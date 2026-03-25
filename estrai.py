@@ -14,31 +14,34 @@ def main():
         print(f"Errore: {blob} non trovato!")
         return
 
-    print("Inizio sventramento del blob (Configurazione forzata)...")
+    print("Tentativo finale: forzatura posizionale dei parametri...")
     try:
-        # do_unpack vuole: args, in_dir, in_arch, force
-        # Gli passiamo: il file, la cartella corrente, nessuna architettura specifica, True per il force
-        ex.do_unpack([blob], in_dir=".", in_arch=None, force=True)
+        # Passiamo i parametri senza nomi, solo i valori nell'ordine: 
+        # [files], arch, force
+        # Dalla lista di prima: unpack_store(file) o do_unpack(args, arch, force)
+        
+        # Proviamo il comando più pulito possibile per questa versione
+        ex.do_unpack([blob], None, True)
         
         if not os.path.exists(final_dir):
             os.makedirs(final_dir)
             
-        # Spostiamo tutto quello che finisce con .dll nella cartella finale
+        # Cerchiamo le DLL ovunque siano finite
         trovati = 0
-        # Il tool potrebbe estrarre in 'out' o nella root
         for root, dirs, files in os.walk("."):
             for f in files:
                 if f.endswith(".dll") and "DLL_ESTRATTE" not in root:
-                    shutil.move(os.path.join(root, f), os.path.join(final_dir, f))
+                    # Copiamo invece di spostare per sicurezza
+                    shutil.copy2(os.path.join(root, f), os.path.join(final_dir, f))
                     trovati += 1
         
         if trovati > 0:
-            print(f"SUCCESSO! Estratte {trovati} DLL in {final_dir}")
+            print(f"SUCCESSO! Trovate {trovati} DLL.")
         else:
-            print("Nessuna DLL trovata dopo l'esecuzione.")
+            print("Esecuzione terminata, ma nessuna DLL rilevata.")
             
     except Exception as e:
-        print(f"Errore tecnico finale: {e}")
+        print(f"Errore: {e}")
 
 if __name__ == "__main__":
     main()
