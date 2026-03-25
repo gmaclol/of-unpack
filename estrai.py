@@ -2,40 +2,42 @@ import sys
 import os
 import shutil
 
-# Aggiungiamo il percorso corretto
+# Aggiungiamo il percorso per le dipendenze
 sys.path.append(os.path.join(os.getcwd(), "pyxamstore"))
 import pyxamstore.explorer as ex
 
 def main():
     blob = "assemblies.blob"
-    # Cartella dove vogliamo le DLL per l'upload
     final_dir = "DLL_ESTRATTE"
     
     if not os.path.exists(blob):
-        print("File assemblies.blob non trovato!")
+        print(f"Errore: {blob} non trovato!")
         return
 
     print("Inizio sventramento del blob...")
     try:
-        # Usiamo SOLO il blob come vuole la funzione
-        ex.unpack_store(blob)
+        # Passiamo il file dentro una lista [] per evitare l'errore delle lettere separate
+        # E usiamo do_unpack che è la funzione di basso livello più sicura
+        ex.do_unpack([blob])
         
-        # Dato che unpack_store crea una cartella di default (di solito 'out' o 'assemblies')
-        # cerchiamo dove sono finiti i file e li mettiamo in DLL_ESTRATTE
         if not os.path.exists(final_dir):
             os.makedirs(final_dir)
             
-        # Cerchiamo i file .dll estratti e li spostiamo
-        source_dir = "out" if os.path.exists("out") else "assemblies"
-        if os.path.exists(source_dir):
-            for f in os.listdir(source_dir):
-                shutil.move(os.path.join(source_dir, f), os.path.join(final_dir, f))
-            print(f"SUCCESSO! File spostati in {final_dir}")
+        # Il tool di solito estrae in una cartella chiamata 'out'
+        source = "out"
+        if os.path.exists(source):
+            for f in os.listdir(source):
+                shutil.move(os.path.join(source, f), os.path.join(final_dir, f))
+            print(f"SUCCESSO! File pronti in {final_dir}")
         else:
-            print("Estratti, ma non trovo la cartella di output (out o assemblies)!")
+            # Se non ha creato 'out', cerchiamo file .dll sparsi nella cartella corrente
+            for f in os.listdir('.'):
+                if f.endswith('.dll'):
+                    shutil.move(f, os.path.join(final_dir, f))
+            print("Controllo completato.")
             
     except Exception as e:
-        print(f"Errore: {e}")
+        print(f"Errore tecnico: {e}")
 
 if __name__ == "__main__":
     main()
